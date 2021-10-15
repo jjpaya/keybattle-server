@@ -20,7 +20,16 @@ LD_DBG  += $(OPT_DBG)
 CPPFLAGS += -std=c++17 -Wall -Wshadow -Weffc++ -Wextra -pedantic-errors -Wno-unused-parameter -MMD -MP
 LDFLAGS  += 
 
-CPPFLAGS += -I ./src/
+# Libraries
+UWS_INCLUDES = -I ./lib/uWebSockets/src -I ./lib/uWebSockets/uSockets/src
+UWS_LIBS = lib/uWebSockets/uSockets/uSockets.a
+UWS_CFLAGS = -DUWS_WITH_PROXY
+
+LIBRARIES = $(UWS_LIBS)
+
+CPPFLAGS += -I ./src/ $(UWS_INCLUDES) $(UWS_CFLAGS)
+LDFLAGS += $(UWS_LIBS)
+
 
 .PHONY: all dbg rel static clean
 
@@ -28,11 +37,11 @@ all: dbg
 
 dbg: CPPFLAGS += $(OPT_DBG)
 dbg: LDFLAGS += $(LD_DBG)
-dbg: $(TARGET)
+dbg: $(LIBRARIES) $(TARGET)
 
 rel: CPPFLAGS += $(OPT_REL)
 rel: LDFLAGS  += $(LD_REL)
-rel: $(TARGET)
+rel: $(LIBRARIES) $(TARGET)
 
 $(TARGET): $(OBJ_FILES)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -43,6 +52,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $$(@D)
 
 $(OUT_DIR) $(patsubst %/,%,$(sort $(dir $(OBJ_FILES)))):
 	@mkdir -p $@
+
+
+lib/uWebSockets/uSockets/uSockets.a:
+	make -C lib/uWebSockets/uSockets
 
 clean:
 	- $(RM) -r $(OBJ_DIR) $(OUT_DIR)
