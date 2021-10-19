@@ -1,5 +1,12 @@
 #include <cstdio>
 
+#include "Server.hpp"
+
 int main() {
-	std::printf("Test");
+	Server s;
+	s.listen(9001, [] (auto * listenSocket) {
+		std::printf("Listening on port 9001\n");
+	});
+	
+	s.run();
 }

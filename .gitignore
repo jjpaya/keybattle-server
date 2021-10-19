@@ -1,2 +1,4 @@
 build
 keybattled
+.cache
+compile_commands.json
