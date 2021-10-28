@@ -8,6 +8,7 @@
 
 class Server : uWS::App {
 	std::uint32_t nextGameId;
+	std::uint32_t nextPlayerId;
 	std::vector<Game> runningGames;
 	
 public:
