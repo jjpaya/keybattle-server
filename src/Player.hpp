@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <chrono>
 
 class Game;
 
@@ -9,4 +10,6 @@ struct Player {
   std::uint32_t id;
 	int x;
 	int y;
+  int points;
+  std::chrono::system_clock::time_point frozenUntil;
 };

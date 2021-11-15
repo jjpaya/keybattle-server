@@ -14,7 +14,7 @@ TARGET = keybattled
 OPT_REL += -O2
 LD_REL  += 
 
-OPT_DBG += -Og -g
+OPT_DBG += -Og -g -fsanitize=address
 LD_DBG  += $(OPT_DBG)
 
 CPPFLAGS += -std=c++20 -Wall -Wshadow -Wextra -pedantic-errors -Wno-unused-parameter -Wno-unused-variable -Wno-shadow -MMD -MP

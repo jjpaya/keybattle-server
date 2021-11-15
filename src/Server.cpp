@@ -13,7 +13,7 @@ Server::Server()
 		.upgrade = [this] (auto *res, auto *req, auto *context) {
 			Game& g = getIdleAndNonFullGame();
 			
-			res->template upgrade<Player>(Player{&g, ++nextPlayerId, Game::MAP_WIDTH / 2, Game::MAP_HEIGHT / 2},
+			res->template upgrade<Player>(g.getNewPlayer(),
 					req->getHeader("sec-websocket-key"),
 					req->getHeader("sec-websocket-protocol"),
 					req->getHeader("sec-websocket-extensions"),
@@ -38,19 +38,46 @@ Server::Server()
       }
     },
 
-    .close = [] (auto *ws, int, auto) {
+    .close = [this] (auto *ws, int, auto) {
       Player * p = ws->getUserData();
       p->g->playerLeft(*p, ws);
+      cleanEmptyGames();
     }
 	});
+
+  struct us_loop_t *loop = (struct us_loop_t *) uWS::Loop::get();
+  struct us_timer_t *delayTimer = us_create_timer(loop, 0, sizeof(void *));
+  Server *sv = this;
+  std::memcpy(us_timer_ext(delayTimer), &sv, sizeof(void *));
+  us_timer_set(delayTimer, [] (struct us_timer_t *t) {
+    Server * s = *static_cast<Server**>(us_timer_ext(t));
+    s->tickGames();
+  }, 50, 50);
 }
 
 Game& Server::getIdleAndNonFullGame() {
 	for (Game& g : runningGames) {
-		if (g.isIdle() && g.getNumPlayers() < Game::PLAYERS_PER_ROUND) {
+		if (g.getState() == Game::State::IDLE
+        && g.getNumPlayers() < Game::PLAYERS_PER_ROUND) {
 			return g;
 		}
 	}
 	
 	return runningGames.emplace_back(*static_cast<uWS::App*>(this), ++nextGameId);
+}
+
+void Server::tickGames() {
+  for (Game& g : runningGames) {
+    g.tick();
+  }
+}
+
+void Server::cleanEmptyGames() {
+  for (auto it = runningGames.begin(); it != runningGames.end(); ) {
+    if (it->getNumPlayers() == 0) {
+      it = runningGames.erase(it);
+    } else {
+      it++;
+    }
+  }
 }
